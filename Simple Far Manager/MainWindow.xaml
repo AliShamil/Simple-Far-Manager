@@ -11,7 +11,25 @@
             <ColumnDefinition/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <ListView x:Name="List1" ItemsSource="{Binding Files}"></ListView>
-        <ListView x:Name="List2" Grid.Column="1"></ListView>
+
+        <ListView  Name="lvFiles" MouseDoubleClick="lvFiles_MouseDoubleClick">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200"/>
+                    <GridViewColumn Header="Size" DisplayMemberBinding="{Binding Size}" Width="100"/>
+                    <GridViewColumn Header="Date Modified" DisplayMemberBinding="{Binding DateModified}" Width="200"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <ListView Grid.Column="1"  Name="lvFilesRight" MouseDoubleClick="lvFilesRight_MouseDoubleClick">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Name" DisplayMemberBinding="{Binding Name}" Width="200"/>
+                    <GridViewColumn Header="Size" DisplayMemberBinding="{Binding Size}" Width="100"/>
+                    <GridViewColumn Header="Date Modified" DisplayMemberBinding="{Binding DateModified}" Width="200"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
     </Grid>
 </Window>

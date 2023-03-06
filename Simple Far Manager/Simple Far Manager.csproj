@@ -8,4 +8,12 @@
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Far_icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Icons\Far_icon.png" />
+  </ItemGroup>
+
 </Project>

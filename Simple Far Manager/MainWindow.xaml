@@ -5,14 +5,19 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Simple_Far_Manager"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="FarManager Lite" Height="450" Width="800" Icon="/Icons/Far_icon.png" Background="#004080">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
 
-        <ListView  Name="lvFiles" MouseDoubleClick="lvFiles_MouseDoubleClick">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <ListView Background="Transparent"  Foreground="WhiteSmoke"  Name="lvFiles" MouseDoubleClick="lvFiles_MouseDoubleClick" KeyDown="lvFiles_KeyDown" TabIndex="2" SelectionChanged="lv_SelectionChanged">
             <ListView.ContextMenu>
                 <ContextMenu >
                     <MenuItem 
@@ -48,7 +53,7 @@
             </ListView.View>
         </ListView>
 
-        <ListView Grid.Column="1"  Name="lvFilesRight" MouseDoubleClick="lvFilesRight_MouseDoubleClick">
+        <ListView Background="Transparent"  Foreground="WhiteSmoke" Grid.Column="1"  Name="lvFilesRight" MouseDoubleClick="lvFilesRight_MouseDoubleClick" TabIndex="3" SelectionChanged="lv_SelectionChanged" KeyDown="lvFilesRight_KeyDown">
             <ListView.ContextMenu>
                 <ContextMenu >
                     <MenuItem 
@@ -85,5 +90,13 @@
                 </GridView>
             </ListView.View>
         </ListView>
+        </Grid>
+        <WrapPanel Background="Black" Grid.Row="1" Orientation="Horizontal">
+            <TextBlock Margin="5" Background= "SkyBlue" FontSize="25" FontFamily="Comic Sans Ms">F1 Open</TextBlock>
+            <TextBlock Margin="5" Background= "SkyBlue" FontSize="25" FontFamily="Comic Sans Ms">F2 Copy</TextBlock>
+            <TextBlock Margin="5" Background= "SkyBlue" FontSize="25" FontFamily="Comic Sans Ms">F3 Move</TextBlock>
+            <TextBlock Margin="5" Background= "SkyBlue" FontSize="25" FontFamily="Comic Sans Ms">F4 Delete</TextBlock>
+            <TextBlock Margin="5" Background= "SkyBlue" FontSize="25" FontFamily="Comic Sans Ms">F5 Properties</TextBlock>
+        </WrapPanel>
     </Grid>
 </Window>

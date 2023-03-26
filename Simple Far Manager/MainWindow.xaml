@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Simple_Far_Manager"
         mc:Ignorable="d"
-        Title="FarManager Lite" Height="450" Width="800" Icon="/Icons/Far_icon.png" Background="#004080">
+        Title="FarManager Lite" Height="450" Width="800" Icon="/Icons/Far_icon.png" Background="#004080" Loaded="Window_Loaded">
     <Grid>
 
         <Grid.RowDefinitions>

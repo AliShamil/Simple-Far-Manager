@@ -32,342 +32,395 @@ public partial class MainWindow : Window
         InitializeComponent();
         currentDirectoryLeft = new DirectoryInfo(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}");
         currentDirectoryRight = new DirectoryInfo(@$"{Environment.GetFolderPath(Environment.SpecialFolder.Desktop)}");
-        LoadFilesLeft();
-        LoadFilesRight();
+
     }
 
 
-    private void LoadFilesLeft()
+    private async Task LoadFilesLeft()
     {
         lvFiles.Items.Clear();
-
         DirectoryInfo parentDirectory = currentDirectoryLeft.Parent!;
-
         if (parentDirectory != null)
             lvFiles.Items.Add(new FileItem { Name = "..", IsFolder = true });
 
-        FileInfo[] files = currentDirectoryLeft.GetFiles();
-        DirectoryInfo[] dirs = currentDirectoryLeft.GetDirectories();
+        DirectoryInfo[] dirs = null!;
+        FileInfo[] files = null!;
+
+        await Task.Run(() =>
+        {
+            dirs = currentDirectoryLeft.GetDirectories();
+            files = currentDirectoryLeft.GetFiles();
+        });
 
         foreach (DirectoryInfo d in dirs)
-            lvFiles.Items.Add(new FileItem { Name = d.Name, Size = "", DateModified = d.LastWriteTime.ToString(), IsFolder = true });
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                lvFiles.Items.Add(new FileItem { Name = d.Name, Size = "", DateModified = d.LastWriteTime.ToString(), IsFolder = true });
+            });
+        }
 
         foreach (FileInfo f in files)
-            lvFiles.Items.Add(new FileItem { Name = f.Name, Size = f.Length.ToString(), DateModified = f.LastWriteTime.ToString(), IsFolder = false });
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                lvFiles.Items.Add(new FileItem { Name = f.Name, Size = f.Length.ToString(), DateModified = f.LastWriteTime.ToString(), IsFolder = false });
+            });
+        }
     }
 
-    private void LoadFilesRight()
+    private async Task LoadFilesRight()
     {
         lvFilesRight.Items.Clear();
         DirectoryInfo parentDirectory = currentDirectoryRight.Parent!;
 
         if (parentDirectory != null)
             lvFilesRight.Items.Add(new FileItem { Name = "..", IsFolder = true });
+        DirectoryInfo[] dirs = null!;
+        FileInfo[] files = null!;
 
-        FileInfo[] files = currentDirectoryRight.GetFiles();
-        DirectoryInfo[] dirs = currentDirectoryRight.GetDirectories();
+        await Task.Run(() =>
+        {
+            dirs = currentDirectoryRight.GetDirectories();
+            files = currentDirectoryRight.GetFiles();
+        });
+
 
         foreach (DirectoryInfo d in dirs)
-            lvFilesRight.Items.Add(new FileItem { Name = d.Name, Size = "", DateModified = d.LastWriteTime.ToString(), IsFolder = true });
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                lvFilesRight.Items.Add(new FileItem { Name = d.Name, Size = "", DateModified = d.LastWriteTime.ToString(), IsFolder = true });
+            });
+        }
 
         foreach (FileInfo f in files)
-            lvFilesRight.Items.Add(new FileItem { Name = f.Name, Size = f.Length.ToString(), DateModified = f.LastWriteTime.ToString(), IsFolder = false });
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                lvFilesRight.Items.Add(new FileItem { Name = f.Name, Size = f.Length.ToString(), DateModified = f.LastWriteTime.ToString(), IsFolder = false });
+            });
+        }
     }
 
 
-    private void lvFiles_MouseDoubleClick(object sender, MouseButtonEventArgs e) => OpenLeft();
 
-    private void lvFilesRight_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) => OpenRight();
+    private async void lvFiles_MouseDoubleClick(object sender, MouseButtonEventArgs e) => await OpenLeft();
 
-
-    private void OpenLeft_Click(object sender, RoutedEventArgs e) => OpenLeft();
-
-    private void OpenRight_Click(object sender, RoutedEventArgs e) => OpenRight();
+    private async void lvFilesRight_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) => await OpenRight();
 
 
-    private void OpenLeft()
+    private async void OpenLeft_Click(object sender, RoutedEventArgs e) => await OpenLeft();
+
+    private async void OpenRight_Click(object sender, RoutedEventArgs e) => await OpenRight();
+
+
+    private async Task OpenLeft()
     {
-        try
+        await Dispatcher.InvokeAsync(async () =>
         {
-            if (lvFiles.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
-
-                if (selectedItem.IsFolder)
+                if (lvFiles.SelectedItem != null)
                 {
-                    if (selectedItem.Name == "..")
-                        currentDirectoryLeft = currentDirectoryLeft.Parent!;
+                    FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
 
+                    if (selectedItem.IsFolder)
+                    {
+                        if (selectedItem.Name == "..")
+                            currentDirectoryLeft = currentDirectoryLeft.Parent!;
+
+                        else
+                            currentDirectoryLeft = new DirectoryInfo(Path.Combine(currentDirectoryLeft.FullName, selectedItem.Name));
+
+                        await LoadFilesLeft();
+                    }
                     else
-                        currentDirectoryLeft = new DirectoryInfo(Path.Combine(currentDirectoryLeft.FullName, selectedItem.Name));
+                    {
+                        var path = Path.Combine(currentDirectoryLeft.FullName, selectedItem.Name);
 
-                    LoadFilesLeft();
-                }
-                else
-                {
-                    var path = Path.Combine(currentDirectoryLeft.FullName, selectedItem.Name);
+                        using Process fileopener = new Process();
 
-                    using Process fileopener = new Process();
-
-                    fileopener.StartInfo.FileName = "explorer";
-                    fileopener.StartInfo.Arguments = "\"" + path + "\"";
-                    fileopener.Start();
+                        fileopener.StartInfo.FileName = "explorer";
+                        fileopener.StartInfo.Arguments = "\"" + path + "\"";
+                        fileopener.Start();
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
     }
 
-    private void OpenRight()
+    private async Task OpenRight()
     {
-        try
+        await Dispatcher.InvokeAsync(async() =>
         {
-            if (lvFilesRight.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
-
-                if (selectedItem.IsFolder)
+                if (lvFilesRight.SelectedItem != null)
                 {
-                    if (selectedItem.Name == "..")
-                        currentDirectoryRight = currentDirectoryRight.Parent!;
+                    FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
+
+                    if (selectedItem.IsFolder)
+                    {
+                        if (selectedItem.Name == "..")
+                            currentDirectoryRight = currentDirectoryRight.Parent!;
+                        else
+                            currentDirectoryRight = new DirectoryInfo(Path.Combine(currentDirectoryRight.FullName, selectedItem.Name));
+
+                       await LoadFilesRight();
+                    }
                     else
-                        currentDirectoryRight = new DirectoryInfo(Path.Combine(currentDirectoryRight.FullName, selectedItem.Name));
+                    {
+                        var path = Path.Combine(currentDirectoryRight.FullName, selectedItem.Name);
 
-                    LoadFilesRight();
-                }
-                else
-                {
-                    var path = Path.Combine(currentDirectoryRight.FullName, selectedItem.Name);
+                        using Process fileopener = new Process();
 
-                    using Process fileopener = new Process();
-
-                    fileopener.StartInfo.FileName = "explorer";
-                    fileopener.StartInfo.Arguments = "\"" + path + "\"";
-                    fileopener.Start();
+                        fileopener.StartInfo.FileName = "explorer";
+                        fileopener.StartInfo.Arguments = "\"" + path + "\"";
+                        fileopener.Start();
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
     }
 
 
 
-    private void DeleteLeft_Click(object sender, RoutedEventArgs e)
+    private async void DeleteLeft_Click(object sender, RoutedEventArgs e)
     {
-        try
+        await Dispatcher.InvokeAsync(async () =>
         {
-            if (lvFiles.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
-                var path = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
+                if (lvFiles.SelectedItem != null)
+                {
+                    FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
+                    var path = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
 
-                if (selectedItem.IsFolder)
-                    FileSystem.DeleteDirectory(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-                else
-                    FileSystem.DeleteFile(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                    if (selectedItem.IsFolder)
+                        FileSystem.DeleteDirectory(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                    else
+                        FileSystem.DeleteFile(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
-                LoadFilesLeft();
-                LoadFilesRight();
+                    await LoadFilesLeft();
+                    await LoadFilesRight();
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
     }
 
-    private void DeleteRight_Click(object sender, RoutedEventArgs e)
+    private async void DeleteRight_Click(object sender, RoutedEventArgs e)
     {
-        try
+        await Dispatcher.InvokeAsync(async () =>
         {
-            if (lvFilesRight.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
+                if (lvFilesRight.SelectedItem != null)
+                {
+                    FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
 
-                var path = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
+                    var path = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
 
-                if (selectedItem.IsFolder)
-                    FileSystem.DeleteDirectory(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
-                else
-                    FileSystem.DeleteFile(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                    if (selectedItem.IsFolder)
+                        FileSystem.DeleteDirectory(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
+                    else
+                        FileSystem.DeleteFile(path, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
-                LoadFilesLeft();
-                LoadFilesRight();
+                    await LoadFilesLeft();
+                    await LoadFilesRight();
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
-    }
-
-
-    private void MoveLeft_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (lvFiles.SelectedItem != null)
+            catch (Exception ex)
             {
-                FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
-                var path = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
-
-                if (selectedItem.IsFolder)
-                {
-                    if (!Directory.Exists(currentDirectoryRight.FullName))
-                        Directory.CreateDirectory(currentDirectoryRight.FullName);
-
-                    Directory.Move(path, Path.Combine(currentDirectoryRight.FullName, Path.GetFileName(path)));
-                }
-                else
-                {
-                    if (!Directory.Exists(currentDirectoryRight.FullName))
-                        Directory.CreateDirectory(currentDirectoryRight.FullName);
-
-                    // Get the file name and destination file path
-                    string fileName = Path.GetFileName(path);
-                    string destFilePath = Path.Combine(currentDirectoryRight.FullName, fileName);
-
-                    File.Move(path, destFilePath);
-                }
-                LoadFilesLeft();
-                LoadFilesRight();
+                MessageBox.Show(ex.Message);
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
-    }
-
-    private void MoveRight_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (lvFilesRight.SelectedItem != null)
-            {
-                FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
-                var path = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
-
-                if (selectedItem.IsFolder)
-                {
-                    if (!Directory.Exists(currentDirectoryLeft.FullName))
-                        Directory.CreateDirectory(currentDirectoryLeft.FullName);
-
-                    Directory.Move(path, Path.Combine(currentDirectoryLeft.FullName, Path.GetFileName(path)));
-                }
-                else
-                {
-                    if (!Directory.Exists(currentDirectoryLeft.FullName))
-                        Directory.CreateDirectory(currentDirectoryLeft.FullName);
-
-                    // Get the file name and destination file path
-                    string fileName = Path.GetFileName(path);
-                    string destFilePath = Path.Combine(currentDirectoryLeft.FullName, fileName);
-
-                    File.Move(path, destFilePath);
-
-                }
-                LoadFilesLeft();
-                LoadFilesRight();
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
-
+        });
     }
 
 
-    private void CopyLeft_Click(object sender, RoutedEventArgs e)
+    private async void MoveLeft_Click(object sender, RoutedEventArgs e)
     {
-        try
+        await Dispatcher.InvokeAsync(async () =>
         {
-            if (lvFiles.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
-                var sourcePath = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
-                var destPath = currentDirectoryRight.FullName;
-
-                if (selectedItem.IsFolder)
+                if (lvFiles.SelectedItem != null)
                 {
-                    if (!Directory.Exists(destPath))
-                        Directory.CreateDirectory(destPath);
+                    FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
+                    var path = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
 
-                    foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", System.IO.SearchOption.AllDirectories))
-                        Directory.CreateDirectory(Path.Combine(destPath, dirPath.Substring(sourcePath.Length + 1)));
+                    if (selectedItem.IsFolder)
+                    {
+                        if (!Directory.Exists(currentDirectoryRight.FullName))
+                            Directory.CreateDirectory(currentDirectoryRight.FullName);
 
-                    foreach (string filePath in Directory.GetFiles(sourcePath, "*", System.IO.SearchOption.AllDirectories))
-                        File.Copy(filePath, Path.Combine(destPath, filePath.Substring(sourcePath.Length + 1)));
+                        Directory.Move(path, Path.Combine(currentDirectoryRight.FullName, Path.GetFileName(path)));
+                    }
+                    else
+                    {
+                        if (!Directory.Exists(currentDirectoryRight.FullName))
+                            Directory.CreateDirectory(currentDirectoryRight.FullName);
+
+                        // Get the file name and destination file path
+                        string fileName = Path.GetFileName(path);
+                        string destFilePath = Path.Combine(currentDirectoryRight.FullName, fileName);
+
+                        File.Move(path, destFilePath);
+                    }
+                   await LoadFilesLeft();
+                   await LoadFilesRight();
                 }
-                else
-                {
-                    if (!Directory.Exists(destPath))
-                        Directory.CreateDirectory(destPath);
-
-                    // Get the file name and destination file path
-                    string fileName = Path.GetFileName(sourcePath);
-                    string destFilePath = Path.Combine(destPath, fileName);
-
-                    File.Copy(sourcePath, destFilePath);
-
-                }
-                LoadFilesLeft();
-                LoadFilesRight();
             }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show(ex.Message);
-        }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
     }
 
-    private void CopyRight_Click(object sender, RoutedEventArgs e)
+    private async void MoveRight_Click(object sender, RoutedEventArgs e)
     {
-        try
+        await Dispatcher.InvokeAsync(async () =>
         {
-            if (lvFilesRight.SelectedItem != null)
+            try
             {
-                FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
-                var destDirPath = currentDirectoryLeft.FullName;
-                var sourceDirPath = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
-
-                if (selectedItem.IsFolder)
+                if (lvFilesRight.SelectedItem != null)
                 {
-                    if (!Directory.Exists(destDirPath))
-                        Directory.CreateDirectory(destDirPath);
+                    FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
+                    var path = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
 
-                    foreach (string dirPath in Directory.GetDirectories(sourceDirPath, "*", System.IO.SearchOption.AllDirectories))
-                        Directory.CreateDirectory(Path.Combine(destDirPath, dirPath.Substring(sourceDirPath.Length + 1)));
+                    if (selectedItem.IsFolder)
+                    {
+                        if (!Directory.Exists(currentDirectoryLeft.FullName))
+                            Directory.CreateDirectory(currentDirectoryLeft.FullName);
 
-                    foreach (string filePath in Directory.GetFiles(sourceDirPath, "*", System.IO.SearchOption.AllDirectories))
-                        File.Copy(filePath, Path.Combine(destDirPath, filePath.Substring(sourceDirPath.Length + 1)));
+                        Directory.Move(path, Path.Combine(currentDirectoryLeft.FullName, Path.GetFileName(path)));
+                    }
+                    else
+                    {
+                        if (!Directory.Exists(currentDirectoryLeft.FullName))
+                            Directory.CreateDirectory(currentDirectoryLeft.FullName);
+
+                        // Get the file name and destination file path
+                        string fileName = Path.GetFileName(path);
+                        string destFilePath = Path.Combine(currentDirectoryLeft.FullName, fileName);
+
+                        File.Move(path, destFilePath);
+
+                    }
+                   await LoadFilesLeft();
+                   await LoadFilesRight();
                 }
-                else
-                {
-                    if (!Directory.Exists(destDirPath))
-                        Directory.CreateDirectory(destDirPath);
-
-                    string fileName = Path.GetFileName(sourceDirPath);
-                    string destFilePath = Path.Combine(destDirPath, fileName);
-
-                    File.Copy(sourceDirPath, destFilePath);
-
-                }
-                LoadFilesLeft();
-                LoadFilesRight();
             }
-        }
-        catch (Exception ex)
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
+    }
+
+
+    private async void CopyLeft_Click(object sender, RoutedEventArgs e)
+    {
+        await Dispatcher.InvokeAsync(async () =>
         {
-            MessageBox.Show(ex.Message);
-        }
+            try
+            {
+                if (lvFiles.SelectedItem != null)
+                {
+                    FileItem selectedItem = (FileItem)lvFiles.SelectedItem;
+                    var sourcePath = (Path.Combine(currentDirectoryLeft.FullName, (lvFiles.SelectedItem as FileItem)!.Name));
+                    var destPath = currentDirectoryRight.FullName;
+
+                    if (selectedItem.IsFolder)
+                    {
+                        if (!Directory.Exists(destPath))
+                            Directory.CreateDirectory(destPath);
+
+                        foreach (string dirPath in Directory.GetDirectories(sourcePath, "*", System.IO.SearchOption.AllDirectories))
+                            Directory.CreateDirectory(Path.Combine(destPath, dirPath.Substring(sourcePath.Length + 1)));
+
+                        foreach (string filePath in Directory.GetFiles(sourcePath, "*", System.IO.SearchOption.AllDirectories))
+                            File.Copy(filePath, Path.Combine(destPath, filePath.Substring(sourcePath.Length + 1)));
+                    }
+                    else
+                    {
+                        if (!Directory.Exists(destPath))
+                            Directory.CreateDirectory(destPath);
+
+                        // Get the file name and destination file path
+                        string fileName = Path.GetFileName(sourcePath);
+                        string destFilePath = Path.Combine(destPath, fileName);
+
+                        File.Copy(sourcePath, destFilePath);
+
+                    }
+                   await LoadFilesLeft();
+                  await  LoadFilesRight();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
+    }
+
+    private async void CopyRight_Click(object sender, RoutedEventArgs e)
+    {
+        await Dispatcher.InvokeAsync(async () =>
+        {
+            try
+            {
+                if (lvFilesRight.SelectedItem != null)
+                {
+                    FileItem selectedItem = (FileItem)lvFilesRight.SelectedItem;
+                    var destDirPath = currentDirectoryLeft.FullName;
+                    var sourceDirPath = (Path.Combine(currentDirectoryRight.FullName, (lvFilesRight.SelectedItem as FileItem)!.Name));
+
+                    if (selectedItem.IsFolder)
+                    {
+                        if (!Directory.Exists(destDirPath))
+                            Directory.CreateDirectory(destDirPath);
+
+                        foreach (string dirPath in Directory.GetDirectories(sourceDirPath, "*", System.IO.SearchOption.AllDirectories))
+                            Directory.CreateDirectory(Path.Combine(destDirPath, dirPath.Substring(sourceDirPath.Length + 1)));
+
+                        foreach (string filePath in Directory.GetFiles(sourceDirPath, "*", System.IO.SearchOption.AllDirectories))
+                            File.Copy(filePath, Path.Combine(destDirPath, filePath.Substring(sourceDirPath.Length + 1)));
+                    }
+                    else
+                    {
+                        if (!Directory.Exists(destDirPath))
+                            Directory.CreateDirectory(destDirPath);
+
+                        string fileName = Path.GetFileName(sourceDirPath);
+                        string destFilePath = Path.Combine(destDirPath, fileName);
+
+                        File.Copy(sourceDirPath, destFilePath);
+
+                    }
+                   await LoadFilesLeft();
+                  await  LoadFilesRight();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        });
     }
 
 
@@ -434,7 +487,7 @@ public partial class MainWindow : Window
         ShowFileProperties(path);
     }
 
-    private void lvFiles_KeyDown(object sender, KeyEventArgs e)
+    private async void lvFiles_KeyDown(object sender, KeyEventArgs e)
     {
         if (lvFiles.SelectedItem is null)
             return;
@@ -443,11 +496,11 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Enter:
-                OpenLeft();
+               await OpenLeft();
                 break;
 
             case Key.F1:
-                OpenLeft();
+                await OpenLeft();
                 break;
 
             case Key.F2:
@@ -480,7 +533,7 @@ public partial class MainWindow : Window
         }
     }
 
-    private void lvFilesRight_KeyDown(object sender, KeyEventArgs e)
+    private async void lvFilesRight_KeyDown(object sender, KeyEventArgs e)
     {
         if (lvFilesRight.SelectedItem is null)
             return;
@@ -489,11 +542,11 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Enter:
-                OpenRight();
+              await  OpenRight();
                 break;
 
             case Key.F1:
-                OpenRight();
+               await OpenRight();
                 break;
 
             case Key.F2:
@@ -513,5 +566,11 @@ public partial class MainWindow : Window
 
 
 
+    }
+
+    private async void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        await LoadFilesLeft();
+        await LoadFilesRight();
     }
 }
